@@ -1,41 +1,45 @@
-// Make the AI Judge Laugh: Office Jokes.
-//
-// One original one-line joke about office life. The line is a single fixed
-// string, so the program is deterministic: same bytes every run, no clock,
-// no randomness, no network, no external files.
-//
-// The laugh: the setup quotes corporate feedback — "be 'more visible' in
-// meetings" — and the punchline takes the jargon literally. The quotes mark
-// the borrowed phrase, so the vest lands as the answer to the review itself:
-// visibility, achieved with a hi-vis vest, not a better career.
-import * as fs from "node:fs";
-import * as path from "node:path";
+// One-Line Office Joke: 24-Hour Sprint — make.fun entry (zxpast/makefun-office-joke-sprint).
+// Node 22, stdlib only. Writes exactly one joke line to
+// `$MAKEFUN_OUTPUT_DIR/entry.txt` (default `/output/entry.txt`).
+// Deterministic: fixed string, no clock, no randomness, no network,
+// no external files.
 
-// The line, built from two parts so the turn lands in order: the setup
-// states the review's demand in its own quoted jargon, and the punchline
-// answers it literally — visibility, achieved with a hi-vis vest.
-const SETUP = "My performance review says I need to be 'more visible' in meetings,";
-const PUNCH = "so now I attend them in a hi-vis vest.";
-const LINE = `${SETUP} ${PUNCH}`;
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-// Gate: /output/entry.txt must be UTF-8 text of 1 to 199 characters,
-// counted as Unicode code points, a single clean line with no newline,
-// carriage return or trailing white space, and not only white space.
-const codePoints = [...LINE].length;
-if (
-  codePoints < 1 ||
-  codePoints > 199 ||
-  LINE.trim().length === 0 ||
-  LINE.includes("\n") ||
-  LINE.includes("\r") ||
-  LINE !== LINE.trim()
-) {
-  throw new Error(`line is ${codePoints} code points, outside the 1-199 gate`);
+const LINE =
+  "After the third lunch theft, the office fridge got a sign saying 'Do not eat what isn't yours', so I labelled mine 'Dave from Accounting'.";
+
+// The pick, per skill humor-one-liner: the twist lands in the last words
+// (the lunch is relabelled "Dave from Accounting"), a quote is the punchline,
+// two concrete office images collide (fridge sign vs. feared accountant),
+// and the narrator incriminates himself instead of explaining the joke.
+// Setup:punchline is 17:8 words; no number is left unpaid ("third" motivates
+// the sign); O1 web search found no verbatim copy of this line.
+
+// Gate (mirrors the house gate): UTF-8 text, 1-200 chars, not only whitespace.
+const chars = [...LINE].length;
+if (chars < 1 || chars > 200) {
+  throw new Error(`entry must be 1-200 characters, got ${chars}`);
+}
+if (LINE.trim().length === 0) {
+  throw new Error("entry must not be only whitespace");
+}
+if (LINE !== LINE.trim()) {
+  throw new Error("entry must not start or end with whitespace");
+}
+if (LINE.includes("\n")) {
+  throw new Error("entry must be a single line");
 }
 
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
-fs.mkdirSync(outDir, { recursive: true });
-fs.writeFileSync(path.join(outDir, "entry.txt"), LINE, "utf8");
+mkdirSync(outDir, { recursive: true });
+const outPath = join(outDir, "entry.txt");
+writeFileSync(outPath, LINE, "utf8");
 
-console.log(LINE);
-console.log(`(${codePoints} code points, ${Buffer.byteLength(LINE, "utf8")} bytes)`);
+// Read back and prove the bytes on disk match the gated string.
+const back = readFileSync(outPath, "utf8");
+if (back !== LINE) {
+  throw new Error("entry.txt on disk does not match the gated line");
+}
+console.log(`wrote ${chars} characters to ${outPath}`);
